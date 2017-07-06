@@ -23,7 +23,8 @@ class Generator(GeneratorBase):
     @classmethod
     def generate_pipeline(cls, source):
         db_connection_string = \
-            source.get('db-connection-string', os.environ.get('SOURCESPEC_REGISTRY_DB_ENGINE'))
+            source.get('db-connection-string',
+                       os.environ.get('SOURCESPEC_REGISTRY_DB_ENGINE'))
         registry = SourceSpecRegistry(db_connection_string)
 
         for spec in registry.list_source_specs():

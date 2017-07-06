@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import datetime
 from sqlalchemy import DateTime, types
-from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy import Column, Unicode, String, create_engine
