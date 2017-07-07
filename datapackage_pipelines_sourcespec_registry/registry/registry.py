@@ -50,8 +50,13 @@ class SourceSpecRegistry:
         self._session = None
 
     @staticmethod
-    def _verify_contents(module, contents):
+    def _verify_contents(module, contents, ignore_missing):
         generator = resolve_generator(module)
+        if generator is None:
+            if ignore_missing:
+                return True
+            else:
+                raise ImportError("module %s not found" % module)
         if not generator.internal_validate(contents):
             raise ValueError("Contents invalid for module %s" % module)
 
@@ -74,9 +79,10 @@ class SourceSpecRegistry:
     def get_source_spec(self, uuid):
         return self.session.query(SourceSpec).filter_by(uuid=uuid).first()
 
-    def put_source_spec(self, owner, module, contents, uuid=None):
+    def put_source_spec(self, owner, module, contents,
+                        uuid=None, ignore_missing=False):
 
-        self._verify_contents(module, contents)
+        self._verify_contents(module, contents, ignore_missing)
 
         spec = None
         now = datetime.datetime.now()

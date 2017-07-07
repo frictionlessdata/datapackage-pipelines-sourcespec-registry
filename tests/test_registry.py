@@ -47,6 +47,23 @@ def test_addition():
 
 
 def test_validation_fails():
-    registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
+    registry = SourceSpecRegistry(MEM_DB_CONN_STR)
     with pytest.raises(ValueError):
         registry.put_source_spec('moi', 'sourcespec_registry', {'db-connection-string': 12})
+
+
+def test_missing_module():
+    registry = SourceSpecRegistry(MEM_DB_CONN_STR)
+    with pytest.raises(ImportError):
+        registry.put_source_spec('moi', 'unknown', {'db-connection-string': 12})
+
+
+def test_ignore_missing_module():
+    registry = SourceSpecRegistry(MEM_DB_CONN_STR)
+    registry.put_source_spec('moi', 'unknown', {'db-connection-string': 12}, ignore_missing=True)
+    ret = list(registry.list_source_specs())
+    assert len(ret) == 1
+    assert ret[0].owner == 'moi'
+    assert ret[0].module == 'unknown'
+    assert ret[0].contents == {'db-connection-string': 12}
+
