@@ -80,7 +80,8 @@ class SourceSpecRegistry:
         return self.session.query(SourceSpec).filter_by(uuid=uuid).first()
 
     def put_source_spec(self, owner, module, contents,
-                        uuid=None, ignore_missing=False):
+                        uuid=None, ignore_missing=False,
+                        uuid_setter=None):
 
         self._verify_contents(module, contents, ignore_missing)
 
@@ -92,6 +93,9 @@ class SourceSpecRegistry:
             spec = self.get_source_spec(uuid)
         if spec is None:
             spec = SourceSpec(uuid=uuid, created_at=now)
+
+        if uuid_setter is not None:
+            uuid_setter(contents, uuid)
 
         spec.owner = owner
         spec.module = module

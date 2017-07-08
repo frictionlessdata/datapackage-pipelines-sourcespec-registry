@@ -46,6 +46,18 @@ def test_addition():
     assert [x.contents.get('db-connection-string') for x in ret] == [None, '12', '13']
 
 
+def test_id_setter():
+    registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
+    def setter(c, i):
+        c['uuid'] = i
+    registry.put_source_spec('me', 'sourcespec_registry', {}, uuid_setter=setter)
+    ret = list(registry.list_source_specs())
+    assert len(ret) == 1
+    assert ret[0].owner == 'me'
+    assert ret[0].module == 'sourcespec_registry'
+    assert ret[0].contents['uuid'] is not None
+
+
 def test_validation_fails():
     registry = SourceSpecRegistry(MEM_DB_CONN_STR)
     with pytest.raises(ValueError):
