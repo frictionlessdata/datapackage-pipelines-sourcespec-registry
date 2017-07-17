@@ -60,6 +60,10 @@ class SourceSpecRegistry:
         if not generator.internal_validate(contents):
             raise ValueError("Contents invalid for module %s" % module)
 
+    @staticmethod
+    def format_uid(owner, dataset_name):
+        return '{}/{}'.format(owner, dataset_name)
+
     @property
     def engine(self):
         if self._engine is None:
@@ -86,7 +90,7 @@ class SourceSpecRegistry:
 
         now = datetime.datetime.now()
 
-        uid = '{}/{}'.format(owner, dataset_name)
+        uid = self.format_uid(owner, dataset_name)
 
         spec = self.get_source_spec(uid)
         if spec is None:
