@@ -13,6 +13,8 @@ ROOT_PATH = os.path.join(os.path.dirname(__file__), '..')
 SCHEMA_FILE = os.path.join(
     os.path.dirname(__file__), 'schemas/sourcespec_registry_schema.json')
 
+registries = {}
+
 
 class Generator(GeneratorBase):
 
@@ -25,7 +27,10 @@ class Generator(GeneratorBase):
         db_connection_string = \
             source.get('db-connection-string',
                        os.environ.get('SOURCESPEC_REGISTRY_DB_ENGINE'))
-        registry = SourceSpecRegistry(db_connection_string)
+        if db_connection_string not in registries:
+            registries[db_connection_string] = \
+                SourceSpecRegistry(db_connection_string)
+        registry = registries[db_connection_string]
 
         for spec in registry.list_source_specs():
             yield f':{spec.module}:', spec.contents
