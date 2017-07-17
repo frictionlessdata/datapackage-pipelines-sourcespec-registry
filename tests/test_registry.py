@@ -22,11 +22,12 @@ def test_creation_empty():
 
 def test_creation_exists():
     registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
-    registry.put_source_spec('me', 'sourcespec_registry', {})
+    registry.put_source_spec('ds0', 'me', 'sourcespec_registry', {})
     del registry
     registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
     ret = list(registry.list_source_specs())
     assert len(ret) == 1
+    assert ret[0].dataset_name == 'ds0'
     assert ret[0].owner == 'me'
     assert ret[0].module == 'sourcespec_registry'
     assert ret[0].contents == {}
@@ -34,47 +35,49 @@ def test_creation_exists():
 
 def test_addition():
     registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
-    registry.put_source_spec('me', 'sourcespec_registry', {})
+    registry.put_source_spec('ds1', 'me', 'sourcespec_registry', {})
     del registry
     registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
-    registry.put_source_spec('moi', 'sourcespec_registry', {'db-connection-string': '12'})
-    registry.put_source_spec('mee', 'sourcespec_registry', {'db-connection-string': '13'})
+    registry.put_source_spec('ds1', 'moi', 'sourcespec_registry', {'db-connection-string': '12'})
+    registry.put_source_spec('ds2', 'mee', 'sourcespec_registry', {'db-connection-string': '13'})
     ret = list(registry.list_source_specs())
     assert len(ret) == 3
+    assert [x.dataset_name for x in ret] == ['ds1', 'ds1', 'ds2']
     assert [x.owner for x in ret] == ['me', 'moi', 'mee']
     assert [x.module for x in ret] == ['sourcespec_registry']*3
     assert [x.contents.get('db-connection-string') for x in ret] == [None, '12', '13']
 
 
-def test_id_setter():
+def test_replacing_datasets():
     registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
-    def setter(c, i):
-        c['uuid'] = i
-    registry.put_source_spec('me', 'sourcespec_registry', {}, uuid_setter=setter)
+    registry.put_source_spec('ds3', 'me', 'sourcespec_registry', {})
+    registry = SourceSpecRegistry(FIlE_DB_CONN_STR)
+    registry.put_source_spec('ds3', 'me', 'sourcespec_registry', {})
     ret = list(registry.list_source_specs())
     assert len(ret) == 1
+    assert ret[0].dataset_name == 'ds3'
     assert ret[0].owner == 'me'
     assert ret[0].module == 'sourcespec_registry'
-    assert ret[0].contents['uuid'] is not None
 
 
 def test_validation_fails():
     registry = SourceSpecRegistry(MEM_DB_CONN_STR)
     with pytest.raises(ValueError):
-        registry.put_source_spec('moi', 'sourcespec_registry', {'db-connection-string': 12})
+        registry.put_source_spec('ds4', 'moi', 'sourcespec_registry', {'db-connection-string': 12})
 
 
 def test_missing_module():
     registry = SourceSpecRegistry(MEM_DB_CONN_STR)
     with pytest.raises(ImportError):
-        registry.put_source_spec('moi', 'unknown', {'db-connection-string': 12})
+        registry.put_source_spec('ds5', 'moi', 'unknown', {'db-connection-string': 12})
 
 
 def test_ignore_missing_module():
     registry = SourceSpecRegistry(MEM_DB_CONN_STR)
-    registry.put_source_spec('moi', 'unknown', {'db-connection-string': 12}, ignore_missing=True)
+    registry.put_source_spec('ds6', 'moi', 'unknown', {'db-connection-string': 12}, ignore_missing=True)
     ret = list(registry.list_source_specs())
     assert len(ret) == 1
+    assert ret[0].dataset_name == 'ds6'
     assert ret[0].owner == 'moi'
     assert ret[0].module == 'unknown'
     assert ret[0].contents == {'db-connection-string': 12}

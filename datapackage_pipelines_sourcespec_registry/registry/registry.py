@@ -1,5 +1,4 @@
 import json
-from uuid import uuid4
 
 import datetime
 from sqlalchemy import DateTime, types
@@ -34,8 +33,9 @@ class JsonType(types.TypeDecorator):
 # ## SourceSpec
 class SourceSpec(Base):
     __tablename__ = 'specs'
-    uuid = Column(String(128), primary_key=True)
+    uid = Column(String(128), primary_key=True)
     owner = Column(String(128))
+    dataset_name = Column(String(128))
     module = Column(Unicode)
     contents = Column(JsonType)
     created_at = Column(DateTime)
@@ -76,28 +76,23 @@ class SourceSpecRegistry:
     def list_source_specs(self):
         yield from self.session.query(SourceSpec).all()
 
-    def get_source_spec(self, uuid):
-        return self.session.query(SourceSpec).filter_by(uuid=uuid).first()
+    def get_source_spec(self, uid):
+        return self.session.query(SourceSpec).filter_by(uid=uid).first()
 
-    def put_source_spec(self, owner, module, contents,
-                        uuid=None, ignore_missing=False,
-                        uuid_setter=None):
+    def put_source_spec(self, dataset_name, owner, module, contents,
+                        ignore_missing=False):
 
         self._verify_contents(module, contents, ignore_missing)
 
-        spec = None
         now = datetime.datetime.now()
-        if uuid is None:
-            uuid = uuid4().hex
-        else:
-            spec = self.get_source_spec(uuid)
+
+        uid = '{}/{}'.format(owner, dataset_name)
+
+        spec = self.get_source_spec(uid)
         if spec is None:
-            spec = SourceSpec(uuid=uuid, created_at=now)
+            spec = SourceSpec(uid=uid, created_at=now,
+                              owner=owner, dataset_name=dataset_name)
 
-        if uuid_setter is not None:
-            uuid_setter(contents, uuid)
-
-        spec.owner = owner
         spec.module = module
         spec.contents = contents
         spec.updated_at = now
@@ -106,4 +101,4 @@ class SourceSpecRegistry:
         s.add(spec)
         s.commit()
 
-        return uuid
+        return uid
