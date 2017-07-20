@@ -1,6 +1,8 @@
 import json
 
 import datetime
+from contextlib import contextmanager
+
 from sqlalchemy import DateTime, types
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -71,17 +73,31 @@ class SourceSpecRegistry:
             Base.metadata.create_all(self._engine)
         return self._engine
 
-    @property
-    def session(self):
+    @contextmanager
+    def session_scope(self):
+        """Provide a transactional scope around a series of operations."""
         if self._session is None:
-            self._session = sessionmaker(bind=self.engine)()
-        return self._session
+            self._session = sessionmaker(bind=self.engine)
+        session = self._session()
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.expunge_all()
+            session.close()
 
     def list_source_specs(self):
-        yield from self.session.query(SourceSpec).all()
+        with self.session_scope() as session:
+            all = session.query(SourceSpec).all()
+            session.expunge_all()
+            yield from all
 
     def get_source_spec(self, uid):
-        return self.session.query(SourceSpec).filter_by(uid=uid).first()
+        with self.session_scope() as session:
+            return session.query(SourceSpec).filter_by(uid=uid).first()
 
     def put_source_spec(self, dataset_name, owner, module, contents,
                         ignore_missing=False):
@@ -101,8 +117,7 @@ class SourceSpecRegistry:
         spec.contents = contents
         spec.updated_at = now
 
-        s = self.session
-        s.add(spec)
-        s.commit()
+        with self.session_scope() as session:
+            session.add(spec)
 
         return uid
