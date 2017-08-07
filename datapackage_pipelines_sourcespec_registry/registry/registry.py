@@ -82,7 +82,7 @@ class SourceSpecRegistry:
         try:
             yield session
             session.commit()
-        except:
+        except: #noqa
             session.rollback()
             raise
         finally:
