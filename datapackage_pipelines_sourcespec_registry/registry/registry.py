@@ -97,7 +97,9 @@ class SourceSpecRegistry:
 
     def get_source_spec(self, uid):
         with self.session_scope() as session:
-            return session.query(SourceSpec).filter_by(uid=uid).first()
+            ret = session.query(SourceSpec).filter_by(uid=uid).first()
+            session.expunge_all()
+            return ret
 
     def put_source_spec(self, dataset_name, owner, module, contents,
                         ignore_missing=False, now=datetime.datetime.now()):
