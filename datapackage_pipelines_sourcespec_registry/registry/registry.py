@@ -100,11 +100,9 @@ class SourceSpecRegistry:
             return session.query(SourceSpec).filter_by(uid=uid).first()
 
     def put_source_spec(self, dataset_name, owner, module, contents,
-                        ignore_missing=False):
+                        ignore_missing=False, now=datetime.datetime.now()):
 
         self._verify_contents(module, contents, ignore_missing)
-
-        now = datetime.datetime.now()
 
         uid = self.format_uid(owner, dataset_name)
 
