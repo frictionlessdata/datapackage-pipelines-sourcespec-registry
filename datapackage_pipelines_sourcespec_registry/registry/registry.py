@@ -43,6 +43,12 @@ class SourceSpec(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
 
+    def __str__(self):
+        return '{} ds:{} upd:{}'.format(self.uid, self.dataset_name, self.updated_at.isoformat())
+
+    def __repr__(self):
+        return 'SourceSpec<%s>' % self
+
 
 class SourceSpecRegistry:
 
@@ -91,7 +97,7 @@ class SourceSpecRegistry:
 
     def list_source_specs(self):
         with self.session_scope() as session:
-            all = session.query(SourceSpec).all()
+            all = session.query(SourceSpec).order_by(SourceSpec.updated_at.desc()).all()
             session.expunge_all()
             yield from all
 
@@ -102,7 +108,10 @@ class SourceSpecRegistry:
             return ret
 
     def put_source_spec(self, dataset_name, owner, module, contents,
-                        ignore_missing=False, now=datetime.datetime.now()):
+                        ignore_missing=False, now=None):
+
+        if now is None:
+            now = datetime.datetime.now()
 
         self._verify_contents(module, contents, ignore_missing)
 
